@@ -1,9 +1,7 @@
-//teste bom 7: pid boa, integral com limite, derivada funcionando
+//test  7: PID working, limits to integrals , derivative working
 
-//sensor + controle de motores com pid aplicado 
+//sensor + applied PID to control motors
 
-//integrando derividada do erro e integral do erro, e ajustndo os parametros
-//testar derivada, pis esta dando problema, vou usar um metodo de quanod ela subir muito, o seu valor vai diminuir aos poucos ou ficar gravada
 #include "Wire.h"
 #include <MPU6050_light.h>
 #include <AccelStepper.h>
@@ -21,8 +19,8 @@ AccelStepper motor1(1, stepPin, dirPin);
 AccelStepper motor2(1, stepPin2, dirPin2);
 
 MPU6050 mpu(Wire);  
-double error;  //valor desejado menos valor real
-int targetValue = 1.5;   //depende da inclinacao da pcb e em qual lado o robo tende cair 
+double error;  //desired value minus real value
+int targetValue = 1.5;   //depends on pcb inclination (error)
 
 
 double result;
@@ -31,7 +29,7 @@ double integral;
 double lastValue;
 unsigned long currentTime;
 unsigned long lastTime;
-float kp = 100;      //ganhos parametros p i d  
+float kp = 100;      //gains P I D
 float kd = 40;
 float ki = 1500;  
                  
@@ -67,7 +65,7 @@ void setup() {
   digitalWrite(enablePin2, LOW);
 
   motor1.setMaxSpeed(20000);	    
-  motor1.setAcceleration(1000);  //cmudar aceleracao, qutno miasor a acelrarcao 
+  motor1.setAcceleration(1000);  
   motor2.setMaxSpeed(20000); 
   motor2.setAcceleration(1000);
 }
@@ -77,13 +75,13 @@ void loop() {
   millisValue = millis();
   currentTime = micros();
 
-  if((millisValue - timeMillis2) >=  10){  // prisr ter um prip loop mais devagar para a leitura do sensor 
+  if((millisValue - timeMillis2) >=  10){  //MPU reading loop
     mpu.update();
     timeMillis2 = millisValue;
   }
-  error = targetValue - mpu.getAngleY();  //calculo do erro
-
-  //pid objetivo: deixar  erro como zero
+  error = targetValue - mpu.getAngleY(); 
+  
+  //pid goal: error as close to zero as possible
   double dt = (currentTime - lastTime) / 1000000.0;  //segundos
 
   if(dt > 0){
@@ -100,12 +98,12 @@ void loop() {
   
   integral += (error + lastValue) * 0.5 * dt;
   integral >= 3000? integral == 3000 : true;
-  result = kp*error + kd*derivative + ki*integral;   //o resultado sera a velocidade do motor 
+  result = kp*error + kd*derivative + ki*integral;   //results will be motors acceleration
 
   lastTime = currentTime;
   lastValue = error;
-  //controle dos motore: direcao e velocidade
-  speed = result; //velocidade dos motores, precisa ser quanto menos o valor maior a velocidade
+  //motor control: direction ad
+  speed = result; //speed is inversely dependent from results variable value
   
     motor1.setSpeed(-speed);
     motor2.setSpeed(speed);
@@ -114,18 +112,18 @@ void loop() {
       motor2.runSpeed(); 
     }
    
-  //debug dos valores
+  //values debug
     if((millisValue - timeMillis) >= 1000){ 
-    Serial.print("erro: ");   //debug do erro
+    Serial.print("erro: ");   //error debug
     Serial.println(error);
 
-    //Serial.print("resultado PID: ");        //debug do resultado
+    //Serial.print("PID results: ");        //results debug
     //Serial.println(result);
 
-    Serial.print("velocidade motores: ");  //debug velocidade
+    Serial.print("motor speed: ");  //speed debug
     Serial.println(speed);
 
-    timeMillis = millisValue;   //  e 
+    timeMillis = millisValue;   
 
     }
 }
